@@ -116,17 +116,25 @@
         function make(json) {
 
             let column = json.column;
-            let result = "<table>\n"
-            result += "<thead>\n";
+
+            let table = document.createElement("table");
+            let thead = document.createElement("thead");
+            table.appendChild(thead);
+
+            // let result = "<table>\n"
+            // result += "<thead>\n";
             //console.log(calculateDepth(column));
 
             let depth = calculateDepth(column);
             for (let i = 0; i < depth; i++) {
                 let json = column[i];
-                result += "<tr>\n";
+                let tr = document.createElement("tr");
+
+                //result += "<tr>\n";
                 let curdepth = getElementsAtDepth(column, i);
                 for (let j = 0; j < curdepth.length; j++) {
-                    result += "<th"
+                    let th = document.createElement("th");
+                    //result += "<th"
 
                     //console.log(curdepth[j]);
                     //rowspan (depth)
@@ -156,65 +164,59 @@
 
                     //console.log("\n");
                     if (rowspan > 1) {
-                        result += " rowspan=" + "'" + rowspan + "'";
+                        //result += " rowspan=" + "'" + rowspan + "'";
+                        th.rowSpan = rowspan;
                     }
 
                     if (colspan > 1) {
-                        result += " colspan=" + "'" + colspan + "'";
+                        //result += " colspan=" + "'" + colspan + "'";
+                        th.colSpan = colspan;
                     }
 
+                    //나중에 css라던가, align, width 같은거는 option으로 하나 만들려고 함
                     if (curdepth[j].width) {
-                        result += " width=" + "'" + curdepth[j].width + "'";
+                        //result += " width=" + "'" + curdepth[j].width + "'";
+                        th.width = curdepth[j].width;
                     }
 
-                    result += ">";
-                    result += curdepth[j].name;
-                    result += "</th>\n";
+                    //result += ">";
+                    //result += curdepth[j].name;
+                    th.appendChild(document.createTextNode(curdepth[j].name));
+                    //result += "</th>\n";
+                    tr.appendChild(th);
                 }
-                result += "</tr>\n";
+                //result += "</tr>\n";
+                thead.appendChild(tr);
             }
-            result += "</thead>\n";
+            //result += "</thead>\n";
+            table.appendChild(thead);
 
             let body = json.data;
 
             if (body) {
-                result += "<tbody>\n";
+                let tbody = document.createElement("tbody");
+                //result += "<tbody>\n";
                 for (let i = 0; i < body.length; i++) {
-                    result += "<tr>\n";
+                    let tr = document.createElement("tr");
+                    //result += "<tr>\n";
 
                     let it = iterateArray(column);
 
                     if (Array.isArray(body[i])) {
                         //항목이 array인 경우
 
-                        //header와 body의 갯수가 맞지 않는 경우
-                        //header가 더 많다면 body에 차이만큼 빈 td값 채워넣고
-                        //body가 더 많다면 나머지 값은 무시
-
                         let content = body[i];
+                        for (let j = 0; j < it.length; j++) {
+                            let td = document.createElement("td");
+                            
+                            //result += "<td>";
+                            //result += content[j] ? content[j] : "";
+                            //result += "</td>\n";
 
-                        for (let j = 0; j < content.length; j++) {
-                            //header보다 body값이 더 많다먼 나머지 값 무시
-                            if (j > it.length - 1) {
-                                break;
-                            }
+                            td.appendChild(document.createTextNode(content[j] ? content[j] : ""));
 
-                            result += "<td>";
-                            result += content[j];
-                            result += "</td>\n";
+                            tr.appendChild(td);
                         }
-
-                        //header가 body보다 더 많다면
-                        //빈 td값 채워넣기
-                        if(it.length > content.length) {
-                            for(let j = 0; j < it.length - content.length; j++) {
-                                result += "<td>";
-                                result += "</td>\n";
-                            }
-                        }
-
-                        //for 반복을 header 기준으로 작성(이러면 반복문 한개에 끝낼 수 있을거 같음..)
-                        //for (let j = 0; j <)
                     } else if (typeof body[i] === "object") {
                         //항목이 json인 경우
 
@@ -238,44 +240,52 @@
                                 break;
                             }
 
-                            console.log(body[i][it[j].name]);
+                            //console.log(body[i][it[j].name]);
 
                             //body에 선언된 key가 header에 없으면 안 들어가게 하려고 함.
                             // if (!keyarray.includes(it[j].name)) {
                             //     console.log("excluded", it[j].name);
                             //     continue;
                             // } else
-                            if(body[i][it[j].name] == undefined) {
-                                console.log(true);
-                                //헤더의 이름을 json키에 대입하고 null인 경우 빈 td값
-                                result += "<td>";
-                                result += "</td>\n";
-                            } else {
+
+                            let td = document.createElement("td");
+                            
+                            if(body[i][it[j].name] != undefined) {
                                 //반대로 header에 선언된 key가 body에 없다면 body 해당 부분에 빈 td 추가
                                 //console.log(body[i]);
                                 //console.log(it[j].name);
-                                result += "<td>";
-                                result += body[i][it[j].name];
-                                result += "</td>\n";
+
+                                //result += "<td>";
+                                //result += body[i][it[j].name];
+                                //result += "</td>\n";
+
+                                td.appendChild(document.createTextNode(body[i][it[j].name]));
                             }
+
+                            tr.appendChild(td);
                         }
 
                         if(it.length - 1 > keyarray.length) {
                             for(let j = 0; j < it.length - keyarray.length; j++) {
-                                result += "<td>";
-                                result += "</td>\n";
+                                //result += "<td>";
+                                //result += "</td>\n";
+
                             }
+
+                            tr.appendChild(td);
                         }
                     }
 
-                    result += "</tr>\n";
+                    //result += "</tr>\n";
+                    tbody.appendChild(tr);
                 }
-                result += "</tbody>\n";
+                //result += "</tbody>\n";
+                table.appendChild(tbody);
             }
 
-            result += "</table>"
+            //result += "</table>"
 
-            return result;
+            return table;
         }
 
 
@@ -354,14 +364,19 @@
                             name: "5-2",
                             child: [
                                 {
-                                    name: "5-2-1"
+                                    name: "5-2-1",
+                                    width: 100
                                 },
                                 {
                                     name: "5-2-2"
                                 }
                             ]
-                        }
+                        },
                     ]
+                },
+                {
+                    name: "6",
+                    width: 70
                 }
             ],
             data: [
@@ -381,11 +396,12 @@
                     "5-1-4-1": "5-1-4-1번째",
                     "5-2-2": "5-2-2번째"
                 },
-                ["1", "2", "3-1", "3-2", "4-1", "4-2", "5-1-1", "5-1-2", "5-2", "6", "7"]
+                ["1", "2", "3-1", "3-2", "4-1", "4-2", "5-1-1", "5-1-2", "5-2", "6", "7", "8", "9", "10", "11", "12"]
             ]
         }
 
-        document.write(make(json));
+        //document.write(make(json));
+        document.body.appendChild(make(json));
     </script>
 </body>
 
