@@ -125,6 +125,9 @@
             // result += "<thead>\n";
             //console.log(calculateDepth(column));
 
+            //body에도 colspan, rowspan 입력 가능하도록 하려고 하는데.. 이것도 만만치 않다.
+            //colspan의 경우 tr마다 해당 열의 모든 컬럼의 colspan의 합계를 구해서 어디까지 td를 생성할 것인지 판단해야 함.
+            //rowspan의 경우 최대 tr의 갯수까지 늘릴 수 있고, 더 넘어가면 최대 tr의 갯수 고정
             let depth = calculateDepth(column);
             for (let i = 0; i < depth; i++) {
                 let json = column[i];
@@ -401,7 +404,11 @@
         }
 
         //document.write(make(json));
-        document.body.appendChild(make(json));
+        let result = make(json);
+
+        //html 필요하면 이렇게 사용할것.
+        console.log(result.outerHTML);
+        document.body.appendChild(result);
     </script>
 </body>
 
