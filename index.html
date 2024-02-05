@@ -179,7 +179,8 @@
                     //나중에 css라던가, align, width 같은거는 option으로 하나 만들려고 함
                     if (curdepth[j].width) {
                         //result += " width=" + "'" + curdepth[j].width + "'";
-                        th.width = curdepth[j].width;
+                        //th.width = curdepth[j].width;
+                        th.style.width = curdepth[j].width + "px";
                     }
 
                     //result += ">";
@@ -223,15 +224,6 @@
                     } else if (typeof body[i] === "object") {
                         //항목이 json인 경우
 
-                        //헤더에 있고 body에 해당 key가 없으면, 중간에 나사가 빠지는 느낌임.
-                        //비교해보고 없는 항목이라면 중간에 빈 td값을 채워넣어야 함.
-
-                        //console.log(iterateArray(column));
-                        let content = getElementsAtDepth(column, 0);
-                        // for(let j = 0; j < content.length; j++) {
-
-                        // }
-
                         let it = iterateArray(column);
                         //console.log(it);
                         let keyarray = Object.keys(body[i]);
@@ -269,6 +261,8 @@
                         }
 
                         if(it.length - 1 > keyarray.length) {
+                            let td = document.createElement("td");
+
                             for(let j = 0; j < it.length - keyarray.length; j++) {
                                 //result += "<td>";
                                 //result += "</td>\n";
