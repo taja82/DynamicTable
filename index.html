@@ -20,6 +20,7 @@
 
 <body>
     <script>
+        //깊이 구하기
         function calculateDepth(jsonArray) {
             let maxDepth = 1; // 최소한의 깊이는 1로 초기화
 
@@ -34,6 +35,7 @@
             return maxDepth;
         }
 
+        //전체 배열 갯수 구하기
         function calculateTotalElements(jsonArray) {
             let totalElements = 0;
 
@@ -78,6 +80,7 @@
             return result;
         }
 
+        //현재 뎁스의 배열 정보 구하기
         function getElementsAtDepth(jsonArray, targetDepth, currentDepth = 0) {
             // 결과를 저장할 배열
             const result = [];
@@ -97,6 +100,7 @@
             return result;
         }
 
+        //필요한 colspan 계산
         function calculateColspan(childArray) {
             let colspan = 0;
 
@@ -121,23 +125,20 @@
             let thead = document.createElement("thead");
             table.appendChild(thead);
 
-            // let result = "<table>\n"
-            // result += "<thead>\n";
-            //console.log(calculateDepth(column));
-
             //body에도 colspan, rowspan 입력 가능하도록 하려고 하는데.. 이것도 만만치 않다.
             //colspan의 경우 tr마다 해당 열의 모든 컬럼의 colspan의 합계를 구해서 어디까지 td를 생성할 것인지 판단해야 함.
             //rowspan의 경우 최대 tr의 갯수까지 늘릴 수 있고, 더 넘어가면 최대 tr의 갯수 고정
+
+            //type가 object인 경우 현재 키 값에 맞춰서 매핑이 되기 때문에, colspan 또는 rowspan을 사용하는 경우 매핑 되어야 할 부분에 매핑이 되지 못하는 현상이 있을 수 있음...
+
             let depth = calculateDepth(column);
             for (let i = 0; i < depth; i++) {
                 let json = column[i];
                 let tr = document.createElement("tr");
 
-                //result += "<tr>\n";
                 let curdepth = getElementsAtDepth(column, i);
                 for (let j = 0; j < curdepth.length; j++) {
                     let th = document.createElement("th");
-                    //result += "<th"
 
                     //console.log(curdepth[j]);
                     //rowspan (depth)
@@ -167,42 +168,38 @@
 
                     //console.log("\n");
                     if (rowspan > 1) {
-                        //result += " rowspan=" + "'" + rowspan + "'";
                         th.rowSpan = rowspan;
                     }
 
                     if (colspan > 1) {
-                        //result += " colspan=" + "'" + colspan + "'";
                         th.colSpan = colspan;
                     }
 
                     //나중에 css라던가, align, width 같은거는 option으로 하나 만들려고 함
                     if (curdepth[j].width) {
-                        //result += " width=" + "'" + curdepth[j].width + "'";
                         //th.width = curdepth[j].width;
                         th.style.width = curdepth[j].width + "px";
                     }
 
-                    //result += ">";
-                    //result += curdepth[j].name;
                     th.appendChild(document.createTextNode(curdepth[j].name));
-                    //result += "</th>\n";
                     tr.appendChild(th);
                 }
-                //result += "</tr>\n";
                 thead.appendChild(tr);
             }
-            //result += "</thead>\n";
             table.appendChild(thead);
 
             let body = json.data;
 
             if (body) {
                 let tbody = document.createElement("tbody");
-                //result += "<tbody>\n";
+
+                //전체 body의 rowspan 합계
+                //같은 열의 rowspan의 합계는 전체 body의 row를 넘어갈 수 없음
+                //컬럼의 갯수만큼 배열 크기 생성해야 함.
+                let rowspanSum = 0;
+
                 for (let i = 0; i < body.length; i++) {
                     let tr = document.createElement("tr");
-                    //result += "<tr>\n";
 
                     let it = iterateArray(column);
 
@@ -212,10 +209,6 @@
                         let content = body[i];
                         for (let j = 0; j < it.length; j++) {
                             let td = document.createElement("td");
-                            
-                            //result += "<td>";
-                            //result += content[j] ? content[j] : "";
-                            //result += "</td>\n";
 
                             td.appendChild(document.createTextNode(content[j] ? content[j] : ""));
 
@@ -228,22 +221,76 @@
                         //head 선언 시에 key값 변수 하나 추가 후에 이거와 비교하는게 맞을듯..
                         let keyarray = Object.keys(body[i]);
 
-                        for (let j = 0; j < (it.length > keyarray.length ? it.length : keyarray.length); j++) {
+                        //해당 row의 colspan 합계
+                        //let colspanSum = 0;
+
+                        //남아있는 colspan
+                        let remainColspan = 0;
+
+                        for (let j = 0; j < it.length; j++) {
+
+                            //colspan이 적용되는 부분이 남았다면
+                            if(remainColspan > 1) {
+                                remainColspan--;
+                                //해당 부분은 건너뛰기
+                                continue;
+                            }
+
                             let td = document.createElement("td");
-                            td.appendChild(document.createTextNode(body[i][it[j].name] ? body[i][it[j].name] : ""));
+
+                            let curColumn = body[i][it[j].name];
+                            let columnValue = "";
+                            let columnJson = {};
+                            //해당 데이터 부분이 object인지 string인지 판단
+                            if(typeof curColumn === "object") {
+                                console.log(curColumn);
+                                //columnValue = curColumn.value;
+                                columnJson = curColumn;
+                            } else if(typeof curColumn == "string") {
+                                columnValue = curColumn;
+                            }
+
+                            let rowspan = 1;
+                            let colspan = 1;
+
+                            if(columnJson) {
+                                if(columnJson.value) {
+                                    columnValue = curColumn.value;
+                                }
+
+                                if(columnJson.colSpan) {
+                                    colspan = curColumn.colSpan;
+                                    //colspanSum += colspan;
+                                    remainColspan = colspan;
+                                    console.log(colspan);
+                                }
+
+                                if(columnJson.rowSpan) {
+                                    rowspan = curColumn.rowSpan;
+                                }
+
+                                if (rowspan > 1) {
+                                    td.rowSpan = rowspan;
+                                }
+
+                                if (colspan > 1) {
+                                    let maxColspan = it.length - j;
+                                    td.colSpan = (colspan > maxColspan) ? maxColspan : colspan;
+                                }
+                            }
+
+                            //colspanSum이 length보다 넘어간다면
+                            //if()
+
+                            td.appendChild(document.createTextNode(columnValue ? columnValue : ""));
+                            console.log(td);
                             tr.appendChild(td);
                         }
                     }
-
-                    //result += "</tr>\n";
                     tbody.appendChild(tr);
                 }
-                //result += "</tbody>\n";
                 table.appendChild(tbody);
             }
-
-            //result += "</table>"
-
             return table;
         }
 
@@ -398,9 +445,71 @@
                     "7-1": "7-1번째",
                     "5-2": "5-2번째",
                     "5-1-4-1": "5-1-4-1번째",
-                    "5-2-2": "5-2-2번째"
+                    "5-2-2": "5-2-2번째",
+                    "16": "16번째"
                 },
-                ["1", "2", "3-1", "3-2", "4-1", "4-2", "5-1-1", "5-1-2", "5-2", "6", "7", "8", "9", "10", "11", "12"]
+                ["1", "2", "3-1", "3-2", "4-1", "4-2", "5-1-1", "5-1-2", "5-2", "6", "7", "8", "9", "10", "11", "12"],
+                {
+                    "0": {
+                        value: "0번째"
+                    },
+                    "1": "1번째",
+                    "2": "2번째",
+                    "3": "3번째",
+                    "4": "4번째",
+                    "5": "5번째",
+                    "6": "6번째",
+                    "7": "7번째",
+                    "8": "8번째",
+                    "9": "9번째",
+                    "10": {
+                        value: "10번째",
+                        colSpan: 5
+                    },
+                    "11": "11번째",
+                    "12": {
+                        value: "12번째",
+                        colSpan: 15
+                    },
+                    "13": "13번째",
+                    "14": "14번째",
+                    "15": "15번째",
+                    "16": "16번째",
+                    "17": "17번째",
+                    "18": "18번째",
+                    "19": "19번째",
+                    "20": "20번째",
+                    "21": "21번째",
+                    "22": "22번째",
+                    "23": "23번째",
+                    "24": "24번째",
+                    "25": "25번째",
+                    "26": "26번째",
+                    "27": "27번째",
+                    "28": "28번째",
+                    "29": "29번째",
+                    "30": "30번째",
+                    "31": "31번째",
+                    "32": "32번째",
+                    "33": "33번째",
+                    "34": "34번째",
+                    "35": "35번째",
+                    "36": "36번째",
+                    "37": "37번째",
+                    "38": "38번째",
+                    "39": "39번째",
+                    "40": "40번째",
+                    "41": "41번째",
+                    "42": "42번째",
+                    "43": "43번째",
+                    "44": "44번째",
+                    "45": "45번째",
+                    "46": "46번째",
+                    "47": "47번째",
+                    "48": "48번째",
+                    "49": "49번째",
+                    "50": "50번째"
+                }
             ]
         }
 
