@@ -207,28 +207,11 @@
                         //항목이 array인 경우
 
                         let content = body[i];
-                        for (let j = 0; j < it.length; j++) {
-                            let td = document.createElement("td");
-
-                            td.appendChild(document.createTextNode(content[j] ? content[j] : ""));
-
-                            tr.appendChild(td);
-                        }
-                    } else if (typeof body[i] === "object") {
-                        //항목이 json인 경우
-
-                        //head의 컬럼명이 body와 key값으로 비교하는데.. 실 헤더 데이터와, 이걸 키값과 비교해야하기에 이 부분에 대해 조금 변경해야하지 않나 싶음.
-                        //head 선언 시에 key값 변수 하나 추가 후에 이거와 비교하는게 맞을듯..
-                        let keyarray = Object.keys(body[i]);
-
-                        //해당 row의 colspan 합계
-                        //let colspanSum = 0;
 
                         //남아있는 colspan
                         let remainColspan = 0;
 
                         for (let j = 0; j < it.length; j++) {
-
                             //colspan이 적용되는 부분이 남았다면
                             if(remainColspan > 1) {
                                 remainColspan--;
@@ -238,7 +221,7 @@
 
                             let td = document.createElement("td");
 
-                            let curColumn = body[i][it[j].name];
+                            let curColumn = content[j];
                             let columnValue = "";
                             let columnJson = {};
                             //해당 데이터 부분이 object인지 string인지 판단
@@ -279,11 +262,78 @@
                                 }
                             }
 
+
+                            td.appendChild(document.createTextNode(columnValue ? columnValue : ""));
+
+                            tr.appendChild(td);
+                        }
+                    } else if (typeof body[i] === "object") {
+                        //항목이 json인 경우
+
+                        //head의 컬럼명이 body와 key값으로 비교하는데.. 실 헤더 데이터와, 이걸 키값과 비교해야하기에 이 부분에 대해 조금 변경해야하지 않나 싶음.
+                        //head 선언 시에 key값 변수 하나 추가 후에 이거와 비교하는게 맞을듯..
+                        //let keyarray = Object.keys(body[i]);
+
+                        //해당 row의 colspan 합계
+                        //let colspanSum = 0;
+
+                        //남아있는 colspan
+                        let remainColspan = 0;
+
+                        for (let j = 0; j < it.length; j++) {
+
+                            //colspan이 적용되는 부분이 남았다면
+                            if(remainColspan > 1) {
+                                remainColspan--;
+                                //해당 부분은 건너뛰기
+                                continue;
+                            }
+
+                            let td = document.createElement("td");
+
+                            let curColumn = body[i][it[j].name];
+                            let columnValue = "";
+                            let columnJson = {};
+                            //해당 데이터 부분이 object인지 string인지 판단
+                            if(typeof curColumn === "object") {
+                                //columnValue = curColumn.value;
+                                columnJson = curColumn;
+                            } else if(typeof curColumn == "string") {
+                                columnValue = curColumn;
+                            }
+
+                            let rowspan = 1;
+                            let colspan = 1;
+
+                            if(columnJson) {
+                                if(columnJson.value) {
+                                    columnValue = curColumn.value;
+                                }
+
+                                if(columnJson.colSpan) {
+                                    colspan = curColumn.colSpan;
+                                    //colspanSum += colspan;
+                                    remainColspan = colspan;
+                                }
+
+                                if(columnJson.rowSpan) {
+                                    rowspan = curColumn.rowSpan;
+                                }
+
+                                if (rowspan > 1) {
+                                    td.rowSpan = rowspan;
+                                }
+
+                                if (colspan > 1) {
+                                    let maxColspan = it.length - j;
+                                    td.colSpan = (colspan > maxColspan) ? maxColspan : colspan;
+                                }
+                            }
+
                             //colspanSum이 length보다 넘어간다면
                             //if()
 
                             td.appendChild(document.createTextNode(columnValue ? columnValue : ""));
-                            console.log(td);
                             tr.appendChild(td);
                         }
                     }
@@ -448,7 +498,7 @@
                     "5-2-2": "5-2-2번째",
                     "16": "16번째"
                 },
-                ["1", "2", "3-1", "3-2", "4-1", "4-2", "5-1-1", "5-1-2", "5-2", "6", "7", "8", "9", "10", "11", "12"],
+                ["1", "2", { value : "3-1", colSpan: 32 }, "3-2", "4-1", "4-2", "5-1-1", "5-1-2", "5-2", "6", "7", "8", "9", "10", "11", "12"],
                 {
                     "0": {
                         value: "0번째"
